@@ -36,7 +36,7 @@ juce_add_plugin(HybridPan
     IS_SYNTH                  FALSE
     NEEDS_MIDI_INPUT          FALSE
     NEEDS_MIDI_OUTPUT         FALSE
-    COPY_PLUGIN_AFTER_BUILD   TRUE
+    COPY_PLUGIN_AFTER_BUILD   FALSE
 )
 
 target_sources(HybridPan PRIVATE
@@ -55,6 +55,40 @@ target_compile_definitions(HybridPan PUBLIC
 target_link_libraries(HybridPan PRIVATE
     juce::juce_audio_utils
     juce::juce_dsp
+    PUBLIC
+    juce::juce_recommended_config_flags
+    juce::juce_recommended_lto_flags
+    juce::juce_recommended_warning_flags
+)
+
+# ---------------------------------------------------------------------------
+# Offline mixer app: takes audio files for the left / centre / right positions
+# and renders HYBD, ICLD and ICTD mixes plus the analysis plots
+# (port of Arias_HW4.m + compareOutputs.m on top of hybridPanMix.m).
+# ---------------------------------------------------------------------------
+juce_add_gui_app(HybridPanMixer
+    COMPANY_NAME              "Austin Arias"
+    PRODUCT_NAME              "Hybrid Pan Mixer"
+)
+
+target_sources(HybridPanMixer PRIVATE
+    Source/mixer/Main.cpp
+    Source/mixer/MainComponent.cpp
+    Source/mixer/MixSession.cpp
+    Source/mixer/MixAnalysis.cpp
+    Source/mixer/HybridPanMix.cpp
+    Source/mixer/PlotComponent.cpp
+)
+
+target_compile_definitions(HybridPanMixer PRIVATE
+    JUCE_WEB_BROWSER=0
+    JUCE_USE_CURL=0
+)
+
+target_link_libraries(HybridPanMixer PRIVATE
+    juce::juce_audio_formats
+    juce::juce_dsp
+    juce::juce_gui_basics
     PUBLIC
     juce::juce_recommended_config_flags
     juce::juce_recommended_lto_flags

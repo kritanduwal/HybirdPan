@@ -63,6 +63,34 @@ The fractional delay and the panning math were verified numerically against the
 MATLAB formulas (constant-power law, contralateral delay direction/magnitude,
 and Lagrange interpolation are bit-exact).
 
+## Hybrid Pan Mixer (offline app)
+
+A second target, **Hybrid Pan Mixer**, is the offline workflow of `Arias_HW4.m`
+and `compareOutputs.m` built on a straight port of `hybridPanMix.m`.
+
+1. Add audio files (WAV/AIFF/FLAC/MP3/OGG) to the **LEFT**, **CENTER** and
+   **RIGHT** positions. Each position has a pan value (default -1 / 0 / +1) and
+   can hold several files. Stereo files are summed to mono; files at different
+   sample rates are resampled to the highest one.
+2. Pick the HYBD mode (Freqsplit / Broadband), crossover and max ICTD.
+3. Press **Render mixes**.
+
+It writes these to the output folder (by default, next to the first audio file):
+
+| File | Contents |
+|------|----------|
+| `output_HYBD.wav`, `output_ICLD.wav`, `output_ICTD.wav` | The three 24-bit stereo mixes, LUFS-matched to their median with a shared -1 dBFS peak safety gain. |
+| `output_analysis.png` | `Arias_HW4.m` panels: L/R waveform, L/R spectrum, inter-channel cross-correlation (peak lag = effective ITD), side spectrum. |
+| `comparison_analysis.png` | `compareOutputs.m` panels: goniometers, coherence, inter-channel phase, side/mid ratio. |
+| `output_report.txt` | Per-track table, loudness and summary statistics (also shown in the app). |
+
+The same plots and report are shown in the app's tabs. It can also be driven
+from the command line; with `--exit` it renders and quits:
+
+```bash
+"Hybrid Pan Mixer.exe" --left gtr.wav --center vox.wav bass.wav --right keys.wav --out mixes --mode freqsplit --exit
+```
+
 ## Build
 
 Requires CMake ≥ 3.22 and a C++17 compiler. JUCE is fetched automatically at
@@ -74,8 +102,10 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
 ```
 
-Outputs VST3, AU (macOS), and a Standalone app. Built plugins are copied to the
-system plugin folders automatically (`COPY_PLUGIN_AFTER_BUILD`).
+Outputs the plugin as VST3, AU (macOS) and Standalone, plus the Hybrid Pan
+Mixer app, under `build/*_artefacts/Release`. The plugin is not copied to the
+system plugin folder (`COPY_PLUGIN_AFTER_BUILD` is off); copy the `.vst3`
+there yourself.
 
 ## Source layout
 
@@ -87,4 +117,11 @@ Source/
   dsp/
     HybridPanner.h            per-sample panning law (the ported core)
     FractionalDelay.h         Lagrange-3 fractional delay line
+  mixer/                      Hybrid Pan Mixer app
+    HybridPanMix.{h,cpp}      offline port of hybridPanMix.m (three mixes + LUFS matching)
+    MixSession.{h,cpp}        load / resample / render / write WAVs
+    MixAnalysis.{h,cpp}       analysis from Arias_HW4.m and compareOutputs.m
+    PlotComponent.{h,cpp}     plot drawing and PNG export
+    MainComponent.{h,cpp}     UI
+    Main.cpp                  application entry point
 ```
